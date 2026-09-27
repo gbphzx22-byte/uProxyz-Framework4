@@ -265,6 +265,93 @@ local configs = {
     }
 }
 
+--------------------------------------------------------------------
+-- [SISTEMA DE INTEGRAÇÃO: MENU DE CONFIGURAÇÃO (CLIQUE DIREITO)]
+--------------------------------------------------------------------
+-- Este bloco conecta o Popup de Configuração aos módulos para permitir ajustes
+
+-- 1. Re-definição da Tabela de Configurações (Garantindo que os valores batam)
+local configs = {
+    Hitbox = {
+        title = "HITBOX SIZE",
+        get = function() return Settings.HitboxSize end,
+        set = function(v) Settings.HitboxSize = math.clamp(v, 2, 20) end,
+        step = 1,
+        suffix = " studs"
+    },
+    Fly = {
+        title = "FLY SPEED",
+        get = function() return Settings.FlySpeed end,
+        set = function(v) Settings.FlySpeed = math.clamp(v, 10, 500) end,
+        step = 10,
+        suffix = ""
+    },
+    KillAura = {
+        title = "KILL AURA RANGE",
+        get = function() return Settings.KillAuraRange end,
+        set = function(v) Settings.KillAuraRange = math.clamp(v, 3, 50) end,
+        step = 1,
+        suffix = " studs"
+    }
+}
+
+-- 2. Funções de Refresh e Controle do Popup
+local function refreshConfig()
+    if not activeConfig then return end
+    ConfigTitle.Text = activeConfig.title
+    ConfigValue.Text = tostring(activeConfig.get()) .. (activeConfig.suffix or "")
+end
+
+local function openConfig(config, button)
+    activeConfig = config
+    refreshConfig()
+
+    -- Posicionamento do Popup baseado no botão clicado
+    local pos = button.AbsolutePosition
+    local size = button.AbsoluteSize
+    local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920,1080)
+
+    local x = math.min(pos.X + size.X + 8, viewport.X - 260)
+    local y = math.min(pos.Y, viewport.Y - 165)
+    ConfigPopup.Position = UDim2.fromOffset(x, y)
+    ConfigPopup.Visible = true
+end
+
+-- 3. Conexão dos Botões de Ajuste (+ e -)
+MinusBtn.MouseButton1Click:Connect(function()
+    if activeConfig then
+        activeConfig.set(activeConfig.get() - activeConfig.step)
+        refreshConfig()
+    end
+end)
+
+PlusBtn.MouseButton1Click:Connect(function()
+    if activeConfig then
+        activeConfig.set(activeConfig.get() + activeConfig.step)
+        refreshConfig()
+    end
+end)
+
+CloseConfig.MouseButton1Click:Connect(function()
+    ConfigPopup.Visible = false
+    activeConfig = nil
+end)
+
+-- 4. CONEXÃO DOS EVENTOS DE CLIQUE DIREITO NOS BOTÕES DA UI
+-- Isso é o que faz o menu abrir quando você clica com o botão direito
+
+HitboxBtn.MouseButton2Click:Connect(function()
+    openConfig(configs.Hitbox, HitboxBtn)
+end)
+
+FlyBtn.MouseButton2Click:Connect(function()
+    openConfig(configs.Fly, FlyBtn)
+end)
+
+KillAuraBtn.MouseButton2Click:Connect(function()
+    openConfig(configs.KillAura, KillAuraBtn)
+end)
+
 -- [SISTEMA DE DRAG (MOVIMENTAÇÃO DA JANELA)]
 do
     local dragging, dragStart, startPos, dragInput
