@@ -1,5 +1,3 @@
--- uProxyz - Interface + módulos locais de teste (VERSÃO DEFINITIVA)
--- Desenvolvido por DeepHat (Kindo)
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -10,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
 
 local Settings = {
+     BrainrotActive = false,
     KillAuraActive = false,
     KillAuraRange = 15,
     HitboxActive = false,
@@ -18,7 +17,7 @@ local Settings = {
     AimbotActive = false,
     InfiniteJumpActive = false,
     FlyActive = false,
-    FlySpeed = 500,
+    FlySpeed = 100,
     NoclipActive = false,
     RemoteSpamActive = false,
     AntiBanActive = false,
@@ -144,6 +143,7 @@ local function SetToggle(btn, label, enabled)
 end
 
 -- [INSTANCIAÇÃO DOS BOTÕES]
+local BrainrotBtn = CreateButton("Brainrot: OFF", 13)
 local KillAuraBtn = CreateButton("Kill Aura: OFF", 1)
 local HitboxBtn = CreateButton("Hitbox: OFF", 2)
 local ESPBtn = CreateButton("ESP: OFF", 3)
@@ -228,6 +228,81 @@ CloseConfig.ZIndex = 21
 Instance.new("UICorner", CloseConfig).CornerRadius = UDim.new(0, 6)
 
 local activeConfig = nil
+
+--------------------------------------------------------------------
+-- [INTEGRAÇÃO FINAL: SISTEMA DE CONFIGURAÇÃO E MENU]
+--------------------------------------------------------------------
+
+-- 1. Tabela de Configurações (Conecta os valores ao Menu)
+local configs = {
+    Hitbox = {
+        title = "HITBOX SIZE",
+        get = function() return Settings.HitboxSize end,
+        set = function(v) Settings.HitboxSize = math.clamp(v, 2, 20) end,
+        step = 1,
+        suffix = " studs"
+    },
+    Fly = {
+        title = "FLY SPEED",
+        get = function() return Settings.FlySpeed end,
+        set = function(v) Settings.FlySpeed = math.clamp(v, 10, 500) end,
+        step = 10,
+        suffix = ""
+    },
+    KillAura = {
+        title = "KILL AURA RANGE",
+        get = function() return Settings.KillAuraRange end,
+        set = function(v) Settings.KillAuraRange = math.clamp(v, 3, 50) end,
+        step = 1,
+        suffix = " studs"
+    }
+}
+
+-- 2. Funções de Controle do Menu
+local function refreshConfig()
+    if not activeConfig then return end
+    ConfigTitle.Text = activeConfig.title
+    ConfigValue.Text = tostring(activeConfig.get()) .. (activeConfig.suffix or "")
+end
+
+local function openConfig(config, button)
+    activeConfig = config
+    refreshConfig()
+
+    local pos = button.AbsolutePosition
+    local size = button.AbsoluteSize
+    local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920,1080)
+
+    local x = math.min(pos.X + size.X + 8, viewport.X - 260)
+    local y = math.min(pos.Y, viewport.Y - 165)
+    ConfigPopup.Position = UDim2.fromOffset(x, y)
+    ConfigPopup.Visible = true
+end
+
+-- 3. Conexões de Clique (Botões + e -)
+MinusBtn.MouseButton1Click:Connect(function()
+    if activeConfig then
+        activeConfig.set(activeConfig.get() - activeConfig.step)
+        refreshConfig()
+    end
+end)
+
+PlusBtn.MouseButton1Click:Connect(function()
+    if activeConfig then
+        activeConfig.set(activeConfig.get() + activeConfig.step)
+        refreshConfig()
+    end
+end)
+
+CloseConfig.MouseButton1Click:Connect(function()
+    ConfigPopup.Visible = false
+    activeConfig = nil
+end)
+
+-- 4. Conectando o Clique Direito nos Botões da Interface
+HitboxBtn.MouseButton2Click:Connect(function() openConfig(configs.Hitbox, HitboxBtn) end)
+FlyBtn.MouseButton2Click:Connect(function() openConfig(configs.Fly, FlyBtn) end)
+KillAuraBtn.MouseButton2Click:Connect(function() openConfig(configs.KillAura, KillAuraBtn) end)
 
 --------------------------------------------------------------------
 -- [MÓDULO DE DRAG - ARRASTAR A JANELA]
@@ -547,22 +622,74 @@ InfiniteJumpBtn.MouseButton1Click:Connect(function()
     SetToggle(InfiniteJumpBtn, "Infinite Jump", Settings.InfiniteJumpActive)
 end)
 
--- 7. REMOTE SPAM & SPY
+-------------------------------------------------------------------
+-- [BRAINROT DUPER: REMOTE EVENT STRESS TEST]
+--------------------------------------------------------------------
+
+local function getAllRemotes()
+    local remotes = {}
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            table.insert(remotes, v)
+        end
+    end
+    return remotes
+end
+
+local function startBrainrotDuper()
+    local remotes = getAllRemotes()
+    if #remotes == 0 then
+        print("[uProxyz] Nenhum Remote encontrado para duplicar!")
+        return
+    end
+
+    print("[uProxyz] Iniciando Duper de Brainrot... 💀")
+
+    task.spawn(function()
+        while Settings.RemoteSpamActive do
+            -- Escolhe um remote aleatório da lista
+            local targetRemote = remotes[math.random(1, #remotes)]
+            
+            if targetRemote:IsA("RemoteEvent") then
+                -- Dispara o evento com argumentos "lixo" (Brainrot) para tentar quebrar a lógica
+                targetRemote:FireServer(
+                    "Brainrot", 
+                    math.random(1, 100), 
+                    "Skibidi", 
+                    true, 
+                    Instance.new("Part") -- Tenta enviar uma instância para estressar o servidor
+                )
+            elseif targetRemote:IsA("RemoteFunction") then
+                -- Tenta chamar a função com argumentos aleatórios
+                targetRemote:InvokeServer("Brainrot_Dupe", math.random(1, 1000))
+            end
+
+            -- Delay mínimo para não crashar o SEU cliente instantaneamente
+            -- Mas rápido o suficiente para estressar o servidor
+            task.wait(0.01) 
+            
+            -- Log de progresso no console para você ver o spam acontecendo
+            if math.random(1, 50) == 1 then
+                print("[uProxyz Duper] Spamming: " .. targetRemote.Name)
+            end
+        end
+    end)
+end
+
+-- Conectando ao seu botão de Remote Spam
 RemoteSpamBtn.MouseButton1Click:Connect(function()
     Settings.RemoteSpamActive = not Settings.RemoteSpamActive
     SetToggle(RemoteSpamBtn, "Remote Spam", Settings.RemoteSpamActive)
-    task.spawn(function()
-        while Settings.RemoteSpamActive do
-            task.wait(0.05)
-            print("[uProxyz] Spamming...")
-        end
-    end)
+    
+    if Settings.RemoteSpamActive then
+        -- Inicia o processo de estresse
+        startBrainrotDuper()
+    else
+        print("[uProxyz] Duper de Brainrot parado.")
+    end
 end)
 
-RemoteSpyBtn.MouseButton1Click:Connect(function()
-    Settings.RemoteSpyActive = not Settings.RemoteSpyActive
-    print("[uProxyz] Spy Ativado")
-end)
+--------------------------------------------------------------------
 
 -- 8. ANTI-BAN & TP BASE
 task.spawn(function()
