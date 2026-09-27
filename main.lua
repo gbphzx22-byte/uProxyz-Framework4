@@ -1,4 +1,4 @@
--- uProxyz - Interface + módulos locais de teste (VERSÃO ULTRA COMPLETA)
+-- uProxyz - Interface + módulos locais de teste (VERSÃO DEFINITIVA)
 -- Desenvolvido por DeepHat (Kindo)
 
 local Players = game:GetService("Players")
@@ -27,7 +27,7 @@ local Settings = {
     ThemeColor = Color3.fromRGB(170, 85, 255)
 }
 
--- [LIMPEZA DE INSTÂNCIAS]
+-- [LIMPEZA]
 local old = CoreGui:FindFirstChild("uProxyz_UI")
 if old then old:Destroy() end
 
@@ -143,7 +143,7 @@ local function SetToggle(btn, label, enabled)
     btn.TextColor3 = enabled and Settings.ThemeColor or Color3.fromRGB(230,230,255)
 end
 
--- [INSTANCIAÇÃO DOS BOTÕES PRINCIPAIS]
+-- [INSTANCIAÇÃO DOS BOTÕES]
 local KillAuraBtn = CreateButton("Kill Aura: OFF", 1)
 local HitboxBtn = CreateButton("Hitbox: OFF", 2)
 local ESPBtn = CreateButton("ESP: OFF", 3)
@@ -159,7 +159,7 @@ local ShutdownBtn = CreateButton("SELF DESTRUCT", 12)
 ShutdownBtn.BackgroundColor3 = Color3.fromRGB(150, 25, 25)
 ShutdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- [SISTEMA DE CONFIGURAÇÃO POPUP (MENU DE AJUSTE)]
+-- [SISTEMA DE CONFIGURAÇÃO POPUP]
 local ConfigPopup = Instance.new("Frame")
 ConfigPopup.Name = "ConfigPopup"
 ConfigPopup.Parent = ScreenGui
@@ -227,20 +227,21 @@ CloseConfig.BorderSizePixel = 0
 CloseConfig.ZIndex = 21
 Instance.new("UICorner", CloseConfig).CornerRadius = UDim.new(0, 6)
 
-local ConfigHint = Instance.new("TextLabel")
-ConfigHint.Parent = ConfigPopup
-ConfigHint.Position = UDim2.new(0, 12, 1, -26)
-ConfigHint.Size = UDim2.new(1, -24, 0, 18)
-ConfigHint.BackgroundTransparency = 1
-ConfigHint.Text = "Botão direito = configurar"
-ConfigHint.TextColor3 = Color3.fromRGB(155,155,175)
-ConfigHint.Font = Enum.Font.Code
-ConfigHint.TextSize = 11
-ConfigHint.ZIndex = 21
-
 local activeConfig = nil
 
--- [CONFIGURAÇÕES DE VALORES]
+--------------------------------------------------------------------
+-- [BLOCO 2: LÓGICA DE COMBATE, MOVIMENTAÇÃO E CONFIGURAÇÃO]
+--------------------------------------------------------------------
+
+local running = true
+local originalHitboxes = {}
+
+-- Função auxiliar para obter o HumanoidRootPart
+local function getRoot(character)
+    return character and character:FindFirstChild("HumanoidRootPart")
+end
+
+-- 1. CONFIGURAÇÃO DOS VALORES (Ajustes do Menu)
 local configs = {
     Hitbox = {
         title = "HITBOX SIZE",
@@ -265,37 +266,7 @@ local configs = {
     }
 }
 
---------------------------------------------------------------------
--- [SISTEMA DE INTEGRAÇÃO: MENU DE CONFIGURAÇÃO (CLIQUE DIREITO)]
---------------------------------------------------------------------
--- Este bloco conecta o Popup de Configuração aos módulos para permitir ajustes
-
--- 1. Re-definição da Tabela de Configurações (Garantindo que os valores batam)
-local configs = {
-    Hitbox = {
-        title = "HITBOX SIZE",
-        get = function() return Settings.HitboxSize end,
-        set = function(v) Settings.HitboxSize = math.clamp(v, 2, 20) end,
-        step = 1,
-        suffix = " studs"
-    },
-    Fly = {
-        title = "FLY SPEED",
-        get = function() return Settings.FlySpeed end,
-        set = function(v) Settings.FlySpeed = math.clamp(v, 10, 500) end,
-        step = 10,
-        suffix = ""
-    },
-    KillAura = {
-        title = "KILL AURA RANGE",
-        get = function() return Settings.KillAuraRange end,
-        set = function(v) Settings.KillAuraRange = math.clamp(v, 3, 50) end,
-        step = 1,
-        suffix = " studs"
-    }
-}
-
--- 2. Funções de Refresh e Controle do Popup
+-- Funções do Menu de Configuração
 local function refreshConfig()
     if not activeConfig then return end
     ConfigTitle.Text = activeConfig.title
@@ -306,7 +277,6 @@ local function openConfig(config, button)
     activeConfig = config
     refreshConfig()
 
-    -- Posicionamento do Popup baseado no botão clicado
     local pos = button.AbsolutePosition
     local size = button.AbsoluteSize
     local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920,1080)
@@ -317,7 +287,7 @@ local function openConfig(config, button)
     ConfigPopup.Visible = true
 end
 
--- 3. Conexão dos Botões de Ajuste (+ e -)
+-- Eventos do Menu (+ e -)
 MinusBtn.MouseButton1Click:Connect(function()
     if activeConfig then
         activeConfig.set(activeConfig.get() - activeConfig.step)
@@ -337,66 +307,19 @@ CloseConfig.MouseButton1Click:Connect(function()
     activeConfig = nil
 end)
 
--- 4. CONEXÃO DOS EVENTOS DE CLIQUE DIREITO NOS BOTÕES DA UI
--- Isso é o que faz o menu abrir quando você clica com o botão direito
+-- Conectando o Clique Direito nos Botões
+HitboxBtn.MouseButton2Click:Connect(function() openConfig(configs.Hitbox, HitboxBtn) end)
+FlyBtn.MouseButton2Click:Connect(function() openConfig(configs.Fly, FlyBtn) end)
+KillAuraBtn.MouseButton2Click:Connect(function() openConfig(configs.KillAura, KillAuraBtn) end)
 
-HitboxBtn.MouseButton2Click:Connect(function()
-    openConfig(configs.Hitbox, HitboxBtn)
-end)
-
-FlyBtn.MouseButton2Click:Connect(function()
-    openConfig(configs.Fly, FlyBtn)
-end)
-
-KillAuraBtn.MouseButton2Click:Connect(function()
-    openConfig(configs.KillAura, KillAuraBtn)
-end)
-
--- [SISTEMA DE DRAG (MOVIMENTAÇÃO DA JANELA)]
-do
-    local dragging, dragStart, startPos, dragInput
-    MainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-        end
-    end)
-    MainFrame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-end
-
---------------------------------------------------------------------
--- [BLOCO 2: LÓGICA DE COMBATE, MOVIMENTAÇÃO E SISTEMAS]
---------------------------------------------------------------------
-
-local running = true
-local originalHitboxes = {}
-
--- Função auxiliar para obter o HumanoidRootPart
-local function getRoot(character)
-    return character and character:FindFirstChild("HumanoidRootPart")
-end
-
--- 1. HITBOX (CORRIGIDO: Loop de Força para manter o tamanho e evitar reset)
+-- 2. HITBOX (CORRIGIDO: Loop de Força para manter o tamanho)
 task.spawn(function()
     while running do
         task.wait()
         if Settings.HitboxActive then
             for _, p in ipairs(Players:GetPlayers()) do
                 if p ~= Player and p.Character then
-                    local char = p.Character
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    local hrp = p.Character:FindFirstChild("HumanoidRootPart")
                     if hrp then
                         if not originalHitboxes[hrp] then
                             originalHitboxes[hrp] = {
@@ -418,7 +341,6 @@ end)
 HitboxBtn.MouseButton1Click:Connect(function()
     Settings.HitboxActive = not Settings.HitboxActive
     SetToggle(HitboxBtn, "Hitbox", Settings.HitboxActive)
-    
     if not Settings.HitboxActive then
         for part, data in pairs(originalHitboxes) do
             if part and part.Parent then
@@ -431,7 +353,7 @@ HitboxBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 2. AIMBOT (CORRIGIDO: Lock-on suave via CFrame e Mouse)
+-- 3. AIMBOT (CORRIGIDO: Lock-on suave via CFrame)
 task.spawn(function()
     local smoothness = 0.12 
     while running do
@@ -446,7 +368,6 @@ task.spawn(function()
                 if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                     local targetPart = p.Character.HumanoidRootPart
                     local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
-                    
                     if onScreen then
                         local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
                         if distance < shortestDistance then
@@ -471,7 +392,7 @@ AimbotBtn.MouseButton1Click:Connect(function()
     SetToggle(AimbotBtn, "Aimbot", Settings.AimbotActive)
 end)
 
--- 3. KILL AURA (CORRIGIDO: Simulação de hit por distância)
+-- 4. KILL AURA (CORRIGIDO)
 task.spawn(function()
     while running do
         task.wait(0.1)
@@ -481,11 +402,8 @@ task.spawn(function()
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= Player and p.Character then
                         local targetRoot = getRoot(p.Character)
-                        if targetRoot then
-                            local dist = (myRoot.Position - targetRoot.Position).Magnitude
-                            if dist <= Settings.KillAuraRange then
-                                print("[uProxyz] KillAura: Atacando " .. p.Name)
-                            end
+                        if targetRoot and (myRoot.Position - targetRoot.Position).Magnitude <= Settings.KillAuraRange then
+                            print("[uProxyz] KillAura: Atacando " .. p.Name)
                         end
                     end
                 end
@@ -499,13 +417,12 @@ KillAuraBtn.MouseButton1Click:Connect(function()
     SetToggle(KillAuraBtn, "Kill Aura", Settings.KillAuraActive)
 end)
 
--- 4. FLY (CORRIGIDO: Física de Alta Velocidade e PlatformStand)
+-- 5. FLY (CORRIGIDO: PlataformStand para evitar lentidão)
 local flyVelocity, flyConnection, flyAttachment
 local function stopFly()
     if flyConnection then flyConnection:Disconnect() end
     if flyVelocity then flyVelocity:Destroy() end
     if flyAttachment then flyAttachment:Destroy() end
-    
     local char = Player.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum then hum.PlatformStand = false end
@@ -521,7 +438,7 @@ FlyBtn.MouseButton1Click:Connect(function()
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not hrp or not hum then return end
 
-        hum.PlatformStand = true -- Desativa a física padrão para evitar lentidão
+        hum.PlatformStand = true 
 
         flyAttachment = Instance.new("Attachment", hrp)
         flyVelocity = Instance.new("LinearVelocity", hrp)
@@ -551,7 +468,7 @@ FlyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 5. NOCLIP & INFINITE JUMP
+-- 6. NOCLIP & INFINITE JUMP
 task.spawn(function()
     while running do
         task.wait()
@@ -580,34 +497,31 @@ InfiniteJumpBtn.MouseButton1Click:Connect(function()
     SetToggle(InfiniteJumpBtn, "Infinite Jump", Settings.InfiniteJumpActive)
 end)
 
--- 6. REMOTE SPAM & SPY
+-- 7. REMOTE SPAM & SPY
 RemoteSpamBtn.MouseButton1Click:Connect(function()
     Settings.RemoteSpamActive = not Settings.RemoteSpamActive
     SetToggle(RemoteSpamBtn, "Remote Spam", Settings.RemoteSpamActive)
-    
     task.spawn(function()
         while Settings.RemoteSpamActive do
             task.wait(0.05)
-            print("[uProxyz] Spamming Remotes...")
+            print("[uProxyz] Spamming...")
         end
     end)
 end)
 
 RemoteSpyBtn.MouseButton1Click:Connect(function()
     Settings.RemoteSpyActive = not Settings.RemoteSpyActive
-    print("[uProxyz] Spy: Monitorando tráfego...")
+    print("[uProxyz] Spy Ativado")
 end)
 
--- 7. ANTI-BAN (MODO BYPASS: VELOCIDADE CONTROLADA)
+-- 8. ANTI-BAN & TP BASE
 task.spawn(function()
     while running do
         task.wait(0.1)
         if Settings.AntiBanActive then
             local char = Player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.WalkSpeed = 16 
-            end
+            if hum then hum.WalkSpeed = 16 end
         end
     end
 end)
@@ -617,18 +531,14 @@ AntiBanBtn.MouseButton1Click:Connect(function()
     SetToggle(AntiBanBtn, "Anti-Ban", Settings.AntiBanActive)
 end)
 
--- 8. TELEPORT BASE
 TPBaseBtn.MouseButton1Click:Connect(function()
     local hrp = getRoot(Player.Character)
     if not hrp then return end
-
     if not Settings.BasePosition then
         Settings.BasePosition = hrp.CFrame
         TPBaseBtn.Text = "BASE SET"
-        print("[uProxyz] Base salva!")
     else
         hrp.CFrame = Settings.BasePosition
-        print("[uProxyz] Teleportado!")
     end
 end)
 
@@ -637,7 +547,7 @@ TPBaseBtn.MouseButton2Click:Connect(function()
     TPBaseBtn.Text = "TP BASE"
 end)
 
----------------------------------------------------------------------
+--------------------------------------------------------------------
 -- [BLOCO 3: ESP, SHUTDOWN, UI FINAL E FECHAMENTO DO SISTEMA]
 --------------------------------------------------------------------
 
@@ -728,7 +638,6 @@ Minimize.MouseButton1Click:Connect(function()
 end)
 
 -- 11. SHUTDOWN (AUTO-DESTRUIÇÃO TOTAL)
--- Limpa tudo para não deixar rastros no jogo
 local function shutdown()
     running = false
     print("[uProxyz] Iniciando Shutdown...")
