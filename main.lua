@@ -622,10 +622,9 @@ InfiniteJumpBtn.MouseButton1Click:Connect(function()
     SetToggle(InfiniteJumpBtn, "Infinite Jump", Settings.InfiniteJumpActive)
 end)
 
--------------------------------------------------------------------
--- [BRAINROT DUPER: REMOTE EVENT STRESS TEST]
---------------------------------------------------------------------
+-- [LÓGICA CORRIGIDA DO BRAINROT DUPER]
 
+-- Função para encontrar todos os Remotes do jogo
 local function getAllRemotes()
     local remotes = {}
     for _, v in ipairs(game:GetDescendants()) do
@@ -636,10 +635,11 @@ local function getAllRemotes()
     return remotes
 end
 
+-- Função de Spam (O Duper)
 local function startBrainrotDuper()
     local remotes = getAllRemotes()
     if #remotes == 0 then
-        print("[uProxyz] Nenhum Remote encontrado para duplicar!")
+        print("[uProxyz] Nenhum Remote encontrado!")
         return
     end
 
@@ -647,34 +647,46 @@ local function startBrainrotDuper()
 
     task.spawn(function()
         while Settings.RemoteSpamActive do
-            -- Escolhe um remote aleatório da lista
+            -- Escolhe um remote aleatório
             local targetRemote = remotes[math.random(1, #remotes)]
             
             if targetRemote:IsA("RemoteEvent") then
-                -- Dispara o evento com argumentos "lixo" (Brainrot) para tentar quebrar a lógica
+                -- Dispara o evento com dados aleatórios para estressar o servidor
                 targetRemote:FireServer(
                     "Brainrot", 
                     math.random(1, 100), 
                     "Skibidi", 
                     true, 
-                    Instance.new("Part") -- Tenta enviar uma instância para estressar o servidor
+                    Instance.new("Part") 
                 )
             elseif targetRemote:IsA("RemoteFunction") then
                 -- Tenta chamar a função com argumentos aleatórios
                 targetRemote:InvokeServer("Brainrot_Dupe", math.random(1, 1000))
             end
 
-            -- Delay mínimo para não crashar o SEU cliente instantaneamente
-            -- Mas rápido o suficiente para estressar o servidor
+            -- Delay para não travar o SEU PC, mas manter o spam alto
             task.wait(0.01) 
             
-            -- Log de progresso no console para você ver o spam acontecendo
+            -- Log de progresso no console
             if math.random(1, 50) == 1 then
                 print("[uProxyz Duper] Spamming: " .. targetRemote.Name)
             end
         end
     end)
 end
+
+-- CONEXÃO DO BOTÃO (O que faz o botão ficar "ON" e iniciar o loop)
+BrainrotBtn.MouseButton1Click:Connect(function()
+    Settings.BrainrotActive = not Settings.BrainrotActive
+    SetToggle(BrainrotBtn, "Brainrot", Settings.BrainrotActive)
+    
+    if Settings.BrainrotActive then
+        -- Inicia o processo de estresse
+        startBrainrotDuper()
+    else
+        print("[uProxyz] Brainrot parado.")
+    end
+end)
 
 -- Conectando ao seu botão de Remote Spam
 RemoteSpamBtn.MouseButton1Click:Connect(function()
