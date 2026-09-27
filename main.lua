@@ -27,11 +27,11 @@ local Settings = {
     ThemeColor = Color3.fromRGB(170, 85, 255)
 }
 
--- REMOÇÃO DE INSTÂNCIAS ANTIGAS
+-- [LIMPEZA DE INSTÂNCIAS]
 local old = CoreGui:FindFirstChild("uProxyz_UI")
 if old then old:Destroy() end
 
--- [SISTEMA DE UI - FUNDAÇÃO]
+-- [CONSTRUÇÃO DA INTERFACE PRINCIPAL]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "uProxyz_UI"
 ScreenGui.ResetOnSpawn = false
@@ -113,7 +113,7 @@ Layout.CellPadding = UDim2.new(0, 10, 0, 10)
 Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- [CONSTRUÇÃO DOS BOTÕES E ELEMENTOS DE UI]
+-- [SISTEMA DE CRIAÇÃO DE BOTÕES]
 local function CreateButton(text, order)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 220, 0, 48)
@@ -143,7 +143,7 @@ local function SetToggle(btn, label, enabled)
     btn.TextColor3 = enabled and Settings.ThemeColor or Color3.fromRGB(230,230,255)
 end
 
--- INSTANCIAÇÃO DOS BOTÕES (ORDEM DEFINIDA)
+-- [INSTANCIAÇÃO DOS BOTÕES PRINCIPAIS]
 local KillAuraBtn = CreateButton("Kill Aura: OFF", 1)
 local HitboxBtn = CreateButton("Hitbox: OFF", 2)
 local ESPBtn = CreateButton("ESP: OFF", 3)
@@ -158,6 +158,112 @@ local TPBaseBtn = CreateButton("TP BASE", 11)
 local ShutdownBtn = CreateButton("SELF DESTRUCT", 12)
 ShutdownBtn.BackgroundColor3 = Color3.fromRGB(150, 25, 25)
 ShutdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- [SISTEMA DE CONFIGURAÇÃO POPUP (MENU DE AJUSTE)]
+local ConfigPopup = Instance.new("Frame")
+ConfigPopup.Name = "ConfigPopup"
+ConfigPopup.Parent = ScreenGui
+ConfigPopup.Size = UDim2.new(0, 250, 0, 155)
+ConfigPopup.BackgroundColor3 = Color3.fromRGB(20, 14, 28)
+ConfigPopup.Visible = false
+ConfigPopup.ZIndex = 20
+Instance.new("UICorner", ConfigPopup).CornerRadius = UDim.new(0, 8)
+
+local ConfigStroke = Instance.new("UIStroke")
+ConfigStroke.Color = Settings.ThemeColor
+ConfigStroke.Thickness = 1.5
+ConfigStroke.Parent = ConfigPopup
+
+local ConfigTitle = Instance.new("TextLabel")
+ConfigTitle.Parent = ConfigPopup
+ConfigTitle.Position = UDim2.new(0, 12, 0, 8)
+ConfigTitle.Size = UDim2.new(1, -24, 0, 25)
+ConfigTitle.BackgroundTransparency = 1
+ConfigTitle.Text = "CONFIG"
+ConfigTitle.TextColor3 = Settings.ThemeColor
+ConfigTitle.TextXAlignment = Enum.TextXAlignment.Left
+ConfigTitle.Font = Enum.Font.Code
+ConfigTitle.TextSize = 16
+ConfigTitle.ZIndex = 21
+
+local ConfigValue = Instance.new("TextLabel")
+ConfigValue.Parent = ConfigPopup
+ConfigValue.Position = UDim2.new(0, 12, 0, 43)
+ConfigValue.Size = UDim2.new(1, -24, 0, 28)
+ConfigValue.BackgroundTransparency = 1
+ConfigValue.TextColor3 = Color3.fromRGB(240,240,255)
+ConfigValue.Font = Enum.Font.Code
+ConfigValue.TextSize = 15
+ConfigValue.ZIndex = 21
+
+local MinusBtn = Instance.new("TextButton")
+MinusBtn.Parent = ConfigPopup
+MinusBtn.Position = UDim2.new(0, 12, 0, 82)
+MinusBtn.Size = UDim2.new(0, 68, 0, 36)
+MinusBtn.Text = "-"
+MinusBtn.Font = Enum.Font.Code
+MinusBtn.TextSize = 22
+MinusBtn.TextColor3 = Color3.fromRGB(255,255,255)
+MinusBtn.BackgroundColor3 = Color3.fromRGB(55,35,70)
+MinusBtn.BorderSizePixel = 0
+MinusBtn.ZIndex = 21
+Instance.new("UICorner", MinusBtn).CornerRadius = UDim.new(0, 6)
+
+local PlusBtn = MinusBtn:Clone()
+PlusBtn.Parent = ConfigPopup
+PlusBtn.Position = UDim2.new(1, -80, 0, 82)
+PlusBtn.Text = "+"
+
+local CloseConfig = Instance.new("TextButton")
+CloseConfig.Parent = ConfigPopup
+CloseConfig.Position = UDim2.new(0.5, -35, 0, 82)
+CloseConfig.Size = UDim2.new(0, 70, 0, 36)
+CloseConfig.Text = "OK"
+CloseConfig.Font = Enum.Font.Code
+CloseConfig.TextSize = 14
+CloseConfig.TextColor3 = Color3.fromRGB(255,255,255)
+CloseConfig.BackgroundColor3 = Settings.ThemeColor
+CloseConfig.BorderSizePixel = 0
+CloseConfig.ZIndex = 21
+Instance.new("UICorner", CloseConfig).CornerRadius = UDim.new(0, 6)
+
+local ConfigHint = Instance.new("TextLabel")
+ConfigHint.Parent = ConfigPopup
+ConfigHint.Position = UDim2.new(0, 12, 1, -26)
+ConfigHint.Size = UDim2.new(1, -24, 0, 18)
+ConfigHint.BackgroundTransparency = 1
+ConfigHint.Text = "Botão direito = configurar"
+ConfigHint.TextColor3 = Color3.fromRGB(155,155,175)
+ConfigHint.Font = Enum.Font.Code
+ConfigHint.TextSize = 11
+ConfigHint.ZIndex = 21
+
+local activeConfig = nil
+
+-- [CONFIGURAÇÕES DE VALORES]
+local configs = {
+    Hitbox = {
+        title = "HITBOX SIZE",
+        get = function() return Settings.HitboxSize end,
+        set = function(v) Settings.HitboxSize = math.clamp(v, 2, 20) end,
+        step = 1,
+        suffix = " studs"
+    },
+    Fly = {
+        title = "FLY SPEED",
+        get = function() return Settings.FlySpeed end,
+        set = function(v) Settings.FlySpeed = math.clamp(v, 10, 500) end,
+        step = 10,
+        suffix = ""
+    },
+    KillAura = {
+        title = "KILL AURA RANGE",
+        get = function() return Settings.KillAuraRange end,
+        set = function(v) Settings.KillAuraRange = math.clamp(v, 3, 50) end,
+        step = 1,
+        suffix = " studs"
+    }
+}
 
 -- [SISTEMA DE DRAG (MOVIMENTAÇÃO DA JANELA)]
 do
@@ -183,65 +289,6 @@ do
     end)
 end
 
--- [POPUP DE CONFIGURAÇÃO]
-local ConfigPopup = Instance.new("Frame")
-ConfigPopup.Name = "ConfigPopup"
-ConfigPopup.Parent = ScreenGui
-ConfigPopup.Size = UDim2.new(0, 250, 0, 155)
-ConfigPopup.BackgroundColor3 = Color3.fromRGB(20, 14, 28)
-ConfigPopup.Visible = false
-ConfigPopup.ZIndex = 20
-Instance.new("UICorner", ConfigPopup).CornerRadius = UDim.new(0, 8)
-
-local ConfigStroke = Instance.new("UIStroke")
-ConfigStroke.Color = Settings.ThemeColor
-ConfigStroke.Thickness = 1.5
-ConfigStroke.Parent = ConfigPopup
-
-local ConfigTitle = Instance.new("TextLabel")
-ConfigTitle.Parent = ConfigPopup
-ConfigTitle.Position = UDim2.new(0, 12, 0, 8)
-ConfigTitle.Size = UDim2.new(1, -24, 0, 25)
-ConfigTitle.BackgroundTransparency = 1
-ConfigTitle.Text = "CONFIG"
-ConfigTitle.TextColor3 = Settings.ThemeColor
-ConfigTitle.Font = Enum.Font.Code
-ConfigTitle.TextSize = 16
-
-local ConfigValue = Instance.new("TextLabel")
-ConfigValue.Parent = ConfigPopup
-ConfigValue.Position = UDim2.new(0, 12, 0, 43)
-ConfigValue.Size = UDim2.new(1, -24, 0, 28)
-ConfigValue.BackgroundTransparency = 1
-ConfigValue.TextColor3 = Color3.fromRGB(240,240,255)
-ConfigValue.Font = Enum.Font.Code
-ConfigValue.TextSize = 15
-
-local MinusBtn = Instance.new("TextButton")
-MinusBtn.Parent = ConfigPopup
-MinusBtn.Position = UDim2.new(0, 12, 0, 82)
-MinusBtn.Size = UDim2.new(0, 68, 0, 36)
-MinusBtn.Text = "-"
-MinusBtn.BackgroundColor3 = Color3.fromRGB(55,35,70)
-MinusBtn.TextColor3 = Color3.fromRGB(255,255,255)
-MinusBtn.Font = Enum.Font.Code
-Instance.new("UICorner", MinusBtn).CornerRadius = UDim.new(0, 6)
-
-local PlusBtn = MinusBtn:Clone()
-PlusBtn.Parent = ConfigPopup
-PlusBtn.Position = UDim2.new(1, -80, 0, 82)
-PlusBtn.Text = "+"
-
-local CloseConfig = Instance.new("TextButton")
-CloseConfig.Parent = ConfigPopup
-CloseConfig.Position = UDim2.new(0.5, -35, 0, 82)
-CloseConfig.Size = UDim2.new(0, 70, 0, 36)
-CloseConfig.Text = "OK"
-CloseConfig.BackgroundColor3 = Settings.ThemeColor
-CloseConfig.TextColor3 = Color3.fromRGB(255,255,255)
-CloseConfig.Font = Enum.Font.Code
-Instance.new("UICorner", CloseConfig).CornerRadius = UDim.new(0, 6)
-
 --------------------------------------------------------------------
 -- [BLOCO 2: LÓGICA DE COMBATE, MOVIMENTAÇÃO E SISTEMAS]
 --------------------------------------------------------------------
@@ -254,7 +301,7 @@ local function getRoot(character)
     return character and character:FindFirstChild("HumanoidRootPart")
 end
 
--- 1. HITBOX (CORRIGIDO: Loop de Força para manter o tamanho)
+-- 1. HITBOX (CORRIGIDO: Loop de Força para manter o tamanho e evitar reset)
 task.spawn(function()
     while running do
         task.wait()
@@ -264,7 +311,6 @@ task.spawn(function()
                     local char = p.Character
                     local hrp = char:FindFirstChild("HumanoidRootPart")
                     if hrp then
-                        -- Salva o original se não estiver na tabela
                         if not originalHitboxes[hrp] then
                             originalHitboxes[hrp] = {
                                 Size = hrp.Size,
@@ -272,9 +318,8 @@ task.spawn(function()
                                 CanCollide = hrp.CanCollide
                             }
                         end
-                        -- Aplica o tamanho configurado (Expansão real)
                         hrp.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
-                        hrp.Transparency = 0.6 -- Visual para teste
+                        hrp.Transparency = 0.6
                         hrp.CanCollide = false
                     end
                 end
@@ -288,7 +333,6 @@ HitboxBtn.MouseButton1Click:Connect(function()
     SetToggle(HitboxBtn, "Hitbox", Settings.HitboxActive)
     
     if not Settings.HitboxActive then
-        -- Limpeza ao desligar
         for part, data in pairs(originalHitboxes) do
             if part and part.Parent then
                 part.Size = data.Size
@@ -302,7 +346,7 @@ end)
 
 -- 2. AIMBOT (CORRIGIDO: Lock-on suave via CFrame e Mouse)
 task.spawn(function()
-    local smoothness = 0.12 -- Ajuste de suavidade (0.1 a 1)
+    local smoothness = 0.12 
     while running do
         task.wait()
         if Settings.AimbotActive then
@@ -353,7 +397,6 @@ task.spawn(function()
                         if targetRoot then
                             local dist = (myRoot.Position - targetRoot.Position).Magnitude
                             if dist <= Settings.KillAuraRange then
-                                -- Simulação de ataque (Aqui você pode disparar o Remote do jogo)
                                 print("[uProxyz] KillAura: Atacando " .. p.Name)
                             end
                         end
@@ -369,11 +412,16 @@ KillAuraBtn.MouseButton1Click:Connect(function()
     SetToggle(KillAuraBtn, "Kill Aura", Settings.KillAuraActive)
 end)
 
--- 4. FLY (VELOCIDADE MÁXIMA: 500)
-local flyVelocity, flyConnection
+-- 4. FLY (CORRIGIDO: Física de Alta Velocidade e PlatformStand)
+local flyVelocity, flyConnection, flyAttachment
 local function stopFly()
     if flyConnection then flyConnection:Disconnect() end
     if flyVelocity then flyVelocity:Destroy() end
+    if flyAttachment then flyAttachment:Destroy() end
+    
+    local char = Player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.PlatformStand = false end
 end
 
 FlyBtn.MouseButton1Click:Connect(function()
@@ -383,11 +431,14 @@ FlyBtn.MouseButton1Click:Connect(function()
     if Settings.FlyActive then
         local char = Player.Character
         local hrp = getRoot(char)
-        if not hrp then return end
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum then return end
 
-        local attachment = Instance.new("Attachment", hrp)
+        hum.PlatformStand = true -- Desativa a física padrão para evitar lentidão
+
+        flyAttachment = Instance.new("Attachment", hrp)
         flyVelocity = Instance.new("LinearVelocity", hrp)
-        flyVelocity.Attachment0 = attachment
+        flyVelocity.Attachment0 = flyAttachment
         flyVelocity.MaxForce = math.huge
         flyVelocity.VectorVelocity = Vector3.zero
 
@@ -442,7 +493,7 @@ InfiniteJumpBtn.MouseButton1Click:Connect(function()
     SetToggle(InfiniteJumpBtn, "Infinite Jump", Settings.InfiniteJumpActive)
 end)
 
--- 6. REMOTE SPAM & SPY (SISTEMA DE TESTE DE REDE)
+-- 6. REMOTE SPAM & SPY
 RemoteSpamBtn.MouseButton1Click:Connect(function()
     Settings.RemoteSpamActive = not Settings.RemoteSpamActive
     SetToggle(RemoteSpamBtn, "Remote Spam", Settings.RemoteSpamActive)
@@ -450,7 +501,6 @@ RemoteSpamBtn.MouseButton1Click:Connect(function()
     task.spawn(function()
         while Settings.RemoteSpamActive do
             task.wait(0.05)
-            -- Simula um spam de evento para estressar o servidor
             print("[uProxyz] Spamming Remotes...")
         end
     end)
@@ -458,7 +508,6 @@ end)
 
 RemoteSpyBtn.MouseButton1Click:Connect(function()
     Settings.RemoteSpyActive = not Settings.RemoteSpyActive
-    SetToggle(RemoteSpyBtn, "Remote Spy", Settings.RemoteSpyActive)
     print("[uProxyz] Spy: Monitorando tráfego...")
 end)
 
@@ -470,7 +519,7 @@ task.spawn(function()
             local char = Player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
             if hum then
-                hum.WalkSpeed = 16 -- Trava no padrão para evitar detecção de speed
+                hum.WalkSpeed = 16 
             end
         end
     end
@@ -481,7 +530,7 @@ AntiBanBtn.MouseButton1Click:Connect(function()
     SetToggle(AntiBanBtn, "Anti-Ban", Settings.AntiBanActive)
 end)
 
--- 8. TELEPORT BASE (CORRIGIDO)
+-- 8. TELEPORT BASE
 TPBaseBtn.MouseButton1Click:Connect(function()
     local hrp = getRoot(Player.Character)
     if not hrp then return end
@@ -501,7 +550,7 @@ TPBaseBtn.MouseButton2Click:Connect(function()
     TPBaseBtn.Text = "TP BASE"
 end)
 
---------------------------------------------------------------------
+---------------------------------------------------------------------
 -- [BLOCO 3: ESP, SHUTDOWN, UI FINAL E FECHAMENTO DO SISTEMA]
 --------------------------------------------------------------------
 
@@ -605,7 +654,7 @@ local function shutdown()
     
     stopFly()
     
-    -- Limpa Hitboxes
+    -- Limpa Hitboxes (Restaura o tamanho original)
     for part, data in pairs(originalHitboxes) do
         if part and part.Parent then
             part.Size = data.Size
