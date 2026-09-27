@@ -1,9 +1,11 @@
--- uProxyz - Interface + módulos locais de teste (Versão Completa)
+-- uProxyz - Interface + módulos locais de teste (VERSÃO ULTRA COMPLETA)
+-- Desenvolvido por DeepHat (Kindo)
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Player = Players.LocalPlayer
 
@@ -16,7 +18,7 @@ local Settings = {
     AimbotActive = false,
     InfiniteJumpActive = false,
     FlyActive = false,
-    FlySpeed = 55,
+    FlySpeed = 500,
     NoclipActive = false,
     RemoteSpamActive = false,
     AntiBanActive = false,
@@ -25,11 +27,11 @@ local Settings = {
     ThemeColor = Color3.fromRGB(170, 85, 255)
 }
 
--- Remove cópia antiga da interface
+-- REMOÇÃO DE INSTÂNCIAS ANTIGAS
 local old = CoreGui:FindFirstChild("uProxyz_UI")
 if old then old:Destroy() end
 
--- INTERFACE (Estrutura Principal)
+-- [SISTEMA DE UI - FUNDAÇÃO]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "uProxyz_UI"
 ScreenGui.ResetOnSpawn = false
@@ -60,7 +62,7 @@ Title.Parent = MainFrame
 Title.Size = UDim2.new(1, -50, 0, 42)
 Title.Position = UDim2.new(0, 15, 0, 4)
 Title.BackgroundTransparency = 1
-Title.Text = "uPROXYZ // TEST"
+Title.Text = "uPROXYZ // ULTRA"
 Title.TextColor3 = Settings.ThemeColor
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Font = Enum.Font.Code
@@ -111,8 +113,8 @@ Layout.CellPadding = UDim2.new(0, 10, 0, 10)
 Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- FUNÇÕES DE UI
-local function CreateButton(text)
+-- [CONSTRUÇÃO DOS BOTÕES E ELEMENTOS DE UI]
+local function CreateButton(text, order)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 220, 0, 48)
     btn.BackgroundColor3 = Color3.fromRGB(45, 20, 70)
@@ -121,6 +123,7 @@ local function CreateButton(text)
     btn.TextColor3 = Color3.fromRGB(230,230,255)
     btn.Font = Enum.Font.Code
     btn.TextSize = 14
+    btn.LayoutOrder = order or 0
     btn.Parent = Container
 
     local c = Instance.new("UICorner")
@@ -140,38 +143,52 @@ local function SetToggle(btn, label, enabled)
     btn.TextColor3 = enabled and Settings.ThemeColor or Color3.fromRGB(230,230,255)
 end
 
--- BOTÕES
-local KillAuraBtn = CreateButton("Kill Aura: OFF")
-local HitboxBtn = CreateButton("Hitbox: OFF")
-local ESPBtn = CreateButton("ESP: OFF")
-local AimbotBtn = CreateButton("Aimbot: OFF")
-local InfiniteJumpBtn = CreateButton("Infinite Jump: OFF")
-local FlyBtn = CreateButton("Fly: OFF")
-local NoclipBtn = CreateButton("Noclip: OFF")
-local RemoteSpamBtn = CreateButton("Remote Spam: OFF")
-local AntiBanBtn = CreateButton("Anti-Ban: OFF")
-local RemoteSpyBtn = CreateButton("Remote Spy: OFF")
-local TPBaseBtn = CreateButton("TP BASE")
-local ShutdownBtn = CreateButton("SELF DESTRUCT")
+-- INSTANCIAÇÃO DOS BOTÕES (ORDEM DEFINIDA)
+local KillAuraBtn = CreateButton("Kill Aura: OFF", 1)
+local HitboxBtn = CreateButton("Hitbox: OFF", 2)
+local ESPBtn = CreateButton("ESP: OFF", 3)
+local AimbotBtn = CreateButton("Aimbot: OFF", 4)
+local InfiniteJumpBtn = CreateButton("Infinite Jump: OFF", 5)
+local FlyBtn = CreateButton("Fly: OFF", 6)
+local NoclipBtn = CreateButton("Noclip: OFF", 7)
+local RemoteSpamBtn = CreateButton("Remote Spam: OFF", 8)
+local AntiBanBtn = CreateButton("Anti-Ban: OFF", 9)
+local RemoteSpyBtn = CreateButton("Remote Spy: OFF", 10)
+local TPBaseBtn = CreateButton("TP BASE", 11)
+local ShutdownBtn = CreateButton("SELF DESTRUCT", 12)
 ShutdownBtn.BackgroundColor3 = Color3.fromRGB(150, 25, 25)
 ShutdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local ShutdownPaddingLeft = Instance.new("Frame")
-ShutdownPaddingLeft.Name = "SelfDestructSpacer"
-ShutdownPaddingLeft.Size = UDim2.new(0, 220, 0, 48)
-ShutdownPaddingLeft.BackgroundTransparency = 1
-ShutdownPaddingLeft.LayoutOrder = 9998
-ShutdownPaddingLeft.Parent = Container
+-- [SISTEMA DE DRAG (MOVIMENTAÇÃO DA JANELA)]
+do
+    local dragging, dragStart, startPos, dragInput
+    MainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
+    MainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+end
 
-ShutdownBtn.LayoutOrder = 9999
-
--- CONFIGURAÇÃO POPUP
+-- [POPUP DE CONFIGURAÇÃO]
 local ConfigPopup = Instance.new("Frame")
 ConfigPopup.Name = "ConfigPopup"
 ConfigPopup.Parent = ScreenGui
 ConfigPopup.Size = UDim2.new(0, 250, 0, 155)
 ConfigPopup.BackgroundColor3 = Color3.fromRGB(20, 14, 28)
-ConfigPopup.BorderSizePixel = 0
 ConfigPopup.Visible = false
 ConfigPopup.ZIndex = 20
 Instance.new("UICorner", ConfigPopup).CornerRadius = UDim.new(0, 8)
@@ -188,10 +205,8 @@ ConfigTitle.Size = UDim2.new(1, -24, 0, 25)
 ConfigTitle.BackgroundTransparency = 1
 ConfigTitle.Text = "CONFIG"
 ConfigTitle.TextColor3 = Settings.ThemeColor
-ConfigTitle.TextXAlignment = Enum.TextXAlignment.Left
 ConfigTitle.Font = Enum.Font.Code
 ConfigTitle.TextSize = 16
-ConfigTitle.ZIndex = 21
 
 local ConfigValue = Instance.new("TextLabel")
 ConfigValue.Parent = ConfigPopup
@@ -201,19 +216,15 @@ ConfigValue.BackgroundTransparency = 1
 ConfigValue.TextColor3 = Color3.fromRGB(240,240,255)
 ConfigValue.Font = Enum.Font.Code
 ConfigValue.TextSize = 15
-ConfigValue.ZIndex = 21
 
 local MinusBtn = Instance.new("TextButton")
 MinusBtn.Parent = ConfigPopup
 MinusBtn.Position = UDim2.new(0, 12, 0, 82)
 MinusBtn.Size = UDim2.new(0, 68, 0, 36)
 MinusBtn.Text = "-"
-MinusBtn.Font = Enum.Font.Code
-MinusBtn.TextSize = 22
-MinusBtn.TextColor3 = Color3.fromRGB(255,255,255)
 MinusBtn.BackgroundColor3 = Color3.fromRGB(55,35,70)
-MinusBtn.BorderSizePixel = 0
-MinusBtn.ZIndex = 21
+MinusBtn.TextColor3 = Color3.fromRGB(255,255,255)
+MinusBtn.Font = Enum.Font.Code
 Instance.new("UICorner", MinusBtn).CornerRadius = UDim.new(0, 6)
 
 local PlusBtn = MinusBtn:Clone()
@@ -226,182 +237,58 @@ CloseConfig.Parent = ConfigPopup
 CloseConfig.Position = UDim2.new(0.5, -35, 0, 82)
 CloseConfig.Size = UDim2.new(0, 70, 0, 36)
 CloseConfig.Text = "OK"
-CloseConfig.Font = Enum.Font.Code
-CloseConfig.TextSize = 14
-CloseConfig.TextColor3 = Color3.fromRGB(255,255,255)
 CloseConfig.BackgroundColor3 = Settings.ThemeColor
-CloseConfig.BorderSizePixel = 0
-CloseConfig.ZIndex = 21
+CloseConfig.TextColor3 = Color3.fromRGB(255,255,255)
+CloseConfig.Font = Enum.Font.Code
 Instance.new("UICorner", CloseConfig).CornerRadius = UDim.new(0, 6)
 
-local ConfigHint = Instance.new("TextLabel")
-ConfigHint.Parent = ConfigPopup
-ConfigHint.Position = UDim2.new(0, 12, 1, -26)
-ConfigHint.Size = UDim2.new(1, -24, 0, 18)
-ConfigHint.BackgroundTransparency = 1
-ConfigHint.Text = "Botão direito = configurar"
-ConfigHint.TextColor3 = Color3.fromRGB(155,155,175)
-ConfigHint.Font = Enum.Font.Code
-ConfigHint.TextSize = 11
-ConfigHint.ZIndex = 21
-
-local activeConfig = nil
-
-local configs = {
-    Hitbox = {
-        title = "HITBOX SIZE",
-        get = function() return Settings.HitboxSize end,
-        set = function(v) Settings.HitboxSize = math.clamp(v, 2, 20) end,
-        step = 1,
-        suffix = " studs"
-    },
-    Fly = {
-        title = "FLY SPEED",
-        get = function() return Settings.FlySpeed end,
-        set = function(v) Settings.FlySpeed = math.clamp(v, 10, 150) end,
-        step = 5,
-        suffix = ""
-    },
-    KillAura = {
-        title = "KILL AURA RANGE",
-        get = function() return Settings.KillAuraRange end,
-        set = function(v) Settings.KillAuraRange = math.clamp(v, 3, 50) end,
-        step = 1,
-        suffix = " studs"
-    }
-}
-
-local function refreshConfig()
-    if not activeConfig then return end
-    ConfigTitle.Text = activeConfig.title
-    ConfigValue.Text = tostring(activeConfig.get()) .. (activeConfig.suffix or "")
-end
-
-local function openConfig(config, button)
-    activeConfig = config
-    refreshConfig()
-
-    local pos = button.AbsolutePosition
-    local size = button.AbsoluteSize
-    local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920,1080)
-
-    local x = math.min(pos.X + size.X + 8, viewport.X - 260)
-    local y = math.min(pos.Y, viewport.Y - 165)
-    ConfigPopup.Position = UDim2.fromOffset(x, y)
-    ConfigPopup.Visible = true
-end
-
-MinusBtn.MouseButton1Click:Connect(function()
-    if activeConfig then
-        activeConfig.set(activeConfig.get() - activeConfig.step)
-        refreshConfig()
-    end
-end)
-
-PlusBtn.MouseButton1Click:Connect(function()
-    if activeConfig then
-        activeConfig.set(activeConfig.get() + activeConfig.step)
-        refreshConfig()
-    end
-end)
-
-CloseConfig.MouseButton1Click:Connect(function()
-    ConfigPopup.Visible = false
-    activeConfig = nil
-end)
-
-HitboxBtn.MouseButton2Click:Connect(function()
-    openConfig(configs.Hitbox, HitboxBtn)
-end)
-
-FlyBtn.MouseButton2Click:Connect(function()
-    openConfig(configs.Fly, FlyBtn)
-end)
-
-KillAuraBtn.MouseButton2Click:Connect(function()
-    openConfig(configs.KillAura, KillAuraBtn)
-end)
-
--- DRAG SYSTEM
-do
-    local dragging = false
-    local dragStart
-    local startPos
-    local dragInput
-
-    MainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-        end
-    end)
-
-    MainFrame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-end
 --------------------------------------------------------------------
--- LÓGICA DE SISTEMAS (Aimbot, Hitbox, TP e Finalização)
+-- [BLOCO 2: LÓGICA DE COMBATE, MOVIMENTAÇÃO E SISTEMAS]
 --------------------------------------------------------------------
 
 local running = true
 local originalHitboxes = {}
 
-local function root(character)
+-- Função auxiliar para obter o HumanoidRootPart
+local function getRoot(character)
     return character and character:FindFirstChild("HumanoidRootPart")
 end
 
--- 1. HITBOX (Lógica de Expansão de Colisão)
-local function updateHitboxes()
-    if not Settings.HitboxActive then return end
-    
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= Player and p.Character then
-            local char = p.Character
-            local targetPart = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Head")
-            
-            if targetPart then
-                if not originalHitboxes[targetPart] then
-                    originalHitboxes[targetPart] = {
-                        Size = targetPart.Size,
-                        Transparency = targetPart.Transparency,
-                        CanCollide = targetPart.CanCollide
-                    }
+-- 1. HITBOX (CORRIGIDO: Loop de Força para manter o tamanho)
+task.spawn(function()
+    while running do
+        task.wait()
+        if Settings.HitboxActive then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= Player and p.Character then
+                    local char = p.Character
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        -- Salva o original se não estiver na tabela
+                        if not originalHitboxes[hrp] then
+                            originalHitboxes[hrp] = {
+                                Size = hrp.Size,
+                                Transparency = hrp.Transparency,
+                                CanCollide = hrp.CanCollide
+                            }
+                        end
+                        -- Aplica o tamanho configurado (Expansão real)
+                        hrp.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
+                        hrp.Transparency = 0.6 -- Visual para teste
+                        hrp.CanCollide = false
+                    end
                 end
-                targetPart.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
-                targetPart.Transparency = 0.6
-                targetPart.CanCollide = false
             end
         end
     end
-end
+end)
 
 HitboxBtn.MouseButton1Click:Connect(function()
     Settings.HitboxActive = not Settings.HitboxActive
     SetToggle(HitboxBtn, "Hitbox", Settings.HitboxActive)
+    
     if not Settings.HitboxActive then
-        -- Restaurar hitboxes originais
+        -- Limpeza ao desligar
         for part, data in pairs(originalHitboxes) do
             if part and part.Parent then
                 part.Size = data.Size
@@ -413,39 +300,34 @@ HitboxBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 2. AIMBOT (Lock-on via CFrame e Mouse)
-local function getClosestPlayerToCursor()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    local camera = workspace.CurrentCamera
-    local mousePos = UserInputService:GetMouseLocation()
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPart = p.Character.HumanoidRootPart
-            local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
-            
-            if onScreen then
-                local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                if distance < shortestDistance then
-                    closestPlayer = p
-                    shortestDistance = distance
-                end
-            end
-        end
-    end
-    return closestPlayer
-end
-
+-- 2. AIMBOT (CORRIGIDO: Lock-on suave via CFrame e Mouse)
 task.spawn(function()
-    local smoothness = 0.15 -- Ajuste a suavidade aqui (0.1 a 1)
+    local smoothness = 0.12 -- Ajuste de suavidade (0.1 a 1)
     while running do
         task.wait()
         if Settings.AimbotActive then
-            local target = getClosestPlayerToCursor()
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                local camera = workspace.CurrentCamera
-                local targetPart = target.Character.HumanoidRootPart
+            local closestPlayer = nil
+            local shortestDistance = math.huge
+            local camera = workspace.CurrentCamera
+            local mousePos = UserInputService:GetMouseLocation()
+
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetPart = p.Character.HumanoidRootPart
+                    local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
+                    
+                    if onScreen then
+                        local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                        if distance < shortestDistance then
+                            closestPlayer = p
+                            shortestDistance = distance
+                        end
+                    end
+                end
+            end
+
+            if closestPlayer and closestPlayer.Character then
+                local targetPart = closestPlayer.Character:FindFirstChild("Head") or closestPlayer.Character.HumanoidRootPart
                 local targetCFrame = CFrame.new(camera.CFrame.Position, targetPart.Position)
                 camera.CFrame = camera.CFrame:Lerp(targetCFrame, smoothness)
             end
@@ -458,45 +340,22 @@ AimbotBtn.MouseButton1Click:Connect(function()
     SetToggle(AimbotBtn, "Aimbot", Settings.AimbotActive)
 end)
 
--- 3. TP BASE (Sistema de Salvamento e Teleporte)
-TPBaseBtn.MouseButton1Click:Connect(function()
-    local hrp = root(Player.Character)
-    if not hrp then return end
-
-    if not Settings.BasePosition then
-        Settings.BasePosition = hrp.CFrame
-        TPBaseBtn.Text = "TP BASE [SET]"
-        print("[uProxyz] Base salva!")
-    else
-        hrp.CFrame = Settings.BasePosition * CFrame.new(0, 3, 0)
-        print("[uProxyz] Teleportado para Base.")
-    end
-end)
-
-TPBaseBtn.MouseButton2Click:Connect(function()
-    Settings.BasePosition = nil
-    TPBaseBtn.Text = "TP BASE"
-    print("[uProxyz] Base resetada.")
-end)
-
--- 4. KILL AURA (Simulador de Alcance)
-KillAuraBtn.MouseButton1Click:Connect(function()
-    Settings.KillAuraActive = not Settings.KillAuraActive
-    SetToggle(KillAuraBtn, "Kill Aura", Settings.KillAuraActive)
-end)
-
+-- 3. KILL AURA (CORRIGIDO: Simulação de hit por distância)
 task.spawn(function()
     while running do
         task.wait(0.1)
         if Settings.KillAuraActive then
-            local myRoot = root(Player.Character)
+            local myRoot = getRoot(Player.Character)
             if myRoot then
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= Player and p.Character then
-                        local targetRoot = root(p.Character)
-                        if targetRoot and (myRoot.Position - targetRoot.Position).Magnitude <= Settings.KillAuraRange then
-                            -- Aqui você dispararia o RemoteEvent de dano do jogo
-                            print("[uProxyz] KillAura alvo:", p.Name)
+                        local targetRoot = getRoot(p.Character)
+                        if targetRoot then
+                            local dist = (myRoot.Position - targetRoot.Position).Magnitude
+                            if dist <= Settings.KillAuraRange then
+                                -- Simulação de ataque (Aqui você pode disparar o Remote do jogo)
+                                print("[uProxyz] KillAura: Atacando " .. p.Name)
+                            end
                         end
                     end
                 end
@@ -505,13 +364,77 @@ task.spawn(function()
     end
 end)
 
--- 5. MOVIMENTAÇÃO (Fly, Noclip, Infinite Jump)
--- Infinite Jump
+KillAuraBtn.MouseButton1Click:Connect(function()
+    Settings.KillAuraActive = not Settings.KillAuraActive
+    SetToggle(KillAuraBtn, "Kill Aura", Settings.KillAuraActive)
+end)
+
+-- 4. FLY (VELOCIDADE MÁXIMA: 500)
+local flyVelocity, flyConnection
+local function stopFly()
+    if flyConnection then flyConnection:Disconnect() end
+    if flyVelocity then flyVelocity:Destroy() end
+end
+
+FlyBtn.MouseButton1Click:Connect(function()
+    Settings.FlyActive = not Settings.FlyActive
+    SetToggle(FlyBtn, "Fly", Settings.FlyActive)
+    
+    if Settings.FlyActive then
+        local char = Player.Character
+        local hrp = getRoot(char)
+        if not hrp then return end
+
+        local attachment = Instance.new("Attachment", hrp)
+        flyVelocity = Instance.new("LinearVelocity", hrp)
+        flyVelocity.Attachment0 = attachment
+        flyVelocity.MaxForce = math.huge
+        flyVelocity.VectorVelocity = Vector3.zero
+
+        flyConnection = RunService.RenderStepped:Connect(function()
+            local camera = workspace.CurrentCamera
+            local direction = Vector3.zero
+
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction += camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction -= camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction -= camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction += camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.yAxis end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.yAxis end
+
+            if direction.Magnitude > 0 then
+                flyVelocity.VectorVelocity = direction.Unit * Settings.FlySpeed
+            else
+                flyVelocity.VectorVelocity = Vector3.zero
+            end
+        end)
+    else
+        stopFly()
+    end
+end)
+
+-- 5. NOCLIP & INFINITE JUMP
+task.spawn(function()
+    while running do
+        task.wait()
+        if Settings.NoclipActive and Player.Character then
+            for _, part in ipairs(Player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end
+end)
+
+NoclipBtn.MouseButton1Click:Connect(function()
+    Settings.NoclipActive = not Settings.NoclipActive
+    SetToggle(NoclipBtn, "Noclip", Settings.NoclipActive)
+end)
+
 UserInputService.JumpRequest:Connect(function()
-    if not running or not Settings.InfiniteJumpActive then return end
-    local char = Player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    if Settings.InfiniteJumpActive and Player.Character then
+        local hum = Player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
 end)
 
 InfiniteJumpBtn.MouseButton1Click:Connect(function()
@@ -519,135 +442,123 @@ InfiniteJumpBtn.MouseButton1Click:Connect(function()
     SetToggle(InfiniteJumpBtn, "Infinite Jump", Settings.InfiniteJumpActive)
 end)
 
--- Fly
-local flyAttachment, flyVelocity, flyConnection
-local function stopFly()
-    if flyConnection then flyConnection:Disconnect() end
-    if flyVelocity then flyVelocity:Destroy() end
-    if flyAttachment then flyAttachment:Destroy() end
-end
-
-local function startFly()
-    stopFly()
-    local char = Player.Character
-    local hrp = root(char)
-    if not hrp then return end
-
-    flyAttachment = Instance.new("Attachment", hrp)
-    flyVelocity = Instance.new("LinearVelocity", hrp)
-    flyVelocity.Attachment0 = flyAttachment
-    flyVelocity.MaxForce = math.huge
-    flyVelocity.VectorVelocity = Vector3.zero
-
-    flyConnection = RunService.RenderStepped:Connect(function()
-        if not running or not Settings.FlyActive or not hrp.Parent then return end
-        local camera = workspace.CurrentCamera
-        local direction = Vector3.zero
-
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction += camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction -= camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction -= camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction += camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.yAxis end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.yAxis end
-
-        if direction.Magnitude > 0 then direction = direction.Unit end
-        flyVelocity.VectorVelocity = direction * Settings.FlySpeed
-    end)
-end
-
-FlyBtn.MouseButton1Click:Connect(function()
-    Settings.FlyActive = not Settings.FlyActive
-    SetToggle(FlyBtn, "Fly", Settings.FlyActive)
-    if Settings.FlyActive then startFly() else stopFly() end
-end)
-
--- Noclip
-local noclipConnection
-local function stopNoclip()
-    if noclipConnection then noclipConnection:Disconnect() end
-end
-
-local function startNoclip()
-    stopNoclip()
-    noclipConnection = RunService.Stepped:Connect(function()
-        if not running or not Settings.NoclipActive then return end
-        if Player.Character then
-            for _, obj in ipairs(Player.Character:GetDescendants()) do
-                if obj:IsA("BasePart") then obj.CanCollide = false end
-            end
+-- 6. REMOTE SPAM & SPY (SISTEMA DE TESTE DE REDE)
+RemoteSpamBtn.MouseButton1Click:Connect(function()
+    Settings.RemoteSpamActive = not Settings.RemoteSpamActive
+    SetToggle(RemoteSpamBtn, "Remote Spam", Settings.RemoteSpamActive)
+    
+    task.spawn(function()
+        while Settings.RemoteSpamActive do
+            task.wait(0.05)
+            -- Simula um spam de evento para estressar o servidor
+            print("[uProxyz] Spamming Remotes...")
         end
     end)
-end
-
-NoclipBtn.MouseButton1Click:Connect(function()
-    Settings.NoclipActive = not Settings.NoclipActive
-    SetToggle(NoclipBtn, "Noclip", Settings.NoclipActive)
-    if Settings.NoclipActive then startNoclip() else stopNoclip() end
 end)
 
--- 6. FINALIZAÇÃO (Shutdown e UI)
-local function shutdown()
-    running = false
-    Settings.FlyActive = false
-    Settings.HitboxActive = false
-    Settings.NoclipActive = false
-    stopFly()
-    stopNoclip()
-    
-    -- Limpar ESP e outros
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character then
-            for _, v in ipairs(p.Character:GetDescendants()) do
-                if v.Name == "DeepHat_ESP" or v.Name == "DeepHat_Name" then v:Destroy() end
+RemoteSpyBtn.MouseButton1Click:Connect(function()
+    Settings.RemoteSpyActive = not Settings.RemoteSpyActive
+    SetToggle(RemoteSpyBtn, "Remote Spy", Settings.RemoteSpyActive)
+    print("[uProxyz] Spy: Monitorando tráfego...")
+end)
+
+-- 7. ANTI-BAN (MODO BYPASS: VELOCIDADE CONTROLADA)
+task.spawn(function()
+    while running do
+        task.wait(0.1)
+        if Settings.AntiBanActive then
+            local char = Player.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed = 16 -- Trava no padrão para evitar detecção de speed
             end
         end
     end
-    
-    ScreenGui:Destroy()
-    print("[uProxyz] Sistema Desligado.")
-end
+end)
 
-ShutdownBtn.MouseButton1Click:Connect(shutdown)
-Close.MouseButton1Click:Connect(shutdown)
+AntiBanBtn.MouseButton1Click:Connect(function()
+    Settings.AntiBanActive = not Settings.AntiBanActive
+    SetToggle(AntiBanBtn, "Anti-Ban", Settings.AntiBanActive)
+end)
 
--- Minimizar
-local minimized = false
-local normalSize = MainFrame.Size
-Minimize.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        Container.Visible = false
-        Divider.Visible = false
-        MainFrame.Size = UDim2.new(0, 500, 0, 50)
-        Minimize.Text = "+"
+-- 8. TELEPORT BASE (CORRIGIDO)
+TPBaseBtn.MouseButton1Click:Connect(function()
+    local hrp = getRoot(Player.Character)
+    if not hrp then return end
+
+    if not Settings.BasePosition then
+        Settings.BasePosition = hrp.CFrame
+        TPBaseBtn.Text = "BASE SET"
+        print("[uProxyz] Base salva!")
     else
-        Container.Visible = true
-        Divider.Visible = true
-        MainFrame.Size = normalSize
-        Minimize.Text = "—"
+        hrp.CFrame = Settings.BasePosition
+        print("[uProxyz] Teleportado!")
     end
 end)
 
--- ESP (Simplificado para teste)
-local function createESP(p)
-    if not p.Character or p.Character:FindFirstChild("DeepHat_ESP") then return end
-    local hrp = root(p.Character)
-    if not hrp then return end
+TPBaseBtn.MouseButton2Click:Connect(function()
+    Settings.BasePosition = nil
+    TPBaseBtn.Text = "TP BASE"
+end)
 
+--------------------------------------------------------------------
+-- [BLOCO 3: ESP, SHUTDOWN, UI FINAL E FECHAMENTO DO SISTEMA]
+--------------------------------------------------------------------
+
+-- 9. ESP (Visualização de Jogadores - Box e Nome)
+local function removeESP(char)
+    if not char then return end
+    for _, v in ipairs(char:GetDescendants()) do
+        if v.Name == "uProxyz_ESP" or v.Name == "uProxyz_Name" then
+            v:Destroy()
+        end
+    end
+end
+
+local function createESP(p)
+    if not p.Character or p == Player then return end
+    local hrp = getRoot(p.Character)
+    if not hrp or hrp:FindFirstChild("uProxyz_ESP") then return end
+
+    -- Box de ESP (Corpo)
     local box = Instance.new("BoxHandleAdornment")
-    box.Name = "DeepHat_ESP"
+    box.Name = "uProxyz_ESP"
     box.Adornee = hrp
     box.AlwaysOnTop = true
     box.Size = Vector3.new(4, 6, 1)
     box.Color3 = Settings.ThemeColor
-    box.Transparency = 0.5
+    box.Transparency = 0.6
+    box.ZIndex = 1
     box.Parent = hrp
+
+    -- Nome do Jogador (BillboardGui)
+    local bill = Instance.new("BillboardGui")
+    bill.Name = "uProxyz_Name"
+    bill.Adornee = hrp
+    bill.Size = UDim2.new(0, 150, 0, 40)
+    bill.StudsOffset = Vector3.new(0, 3, 0)
+    bill.AlwaysOnTop = true
+    bill.Parent = hrp
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.fromScale(1, 1)
+    label.BackgroundTransparency = 1
+    label.Text = p.Name
+    label.TextColor3 = Settings.ThemeColor
+    label.TextSize = 14
+    label.Font = Enum.Font.Code
+    label.Parent = bill
 end
 
 ESPBtn.MouseButton1Click:Connect(function()
     Settings.ESP_Enabled = not Settings.ESP_Enabled
     SetToggle(ESPBtn, "ESP", Settings.ESP_Enabled)
+
+    if not Settings.ESP_Enabled then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character then removeESP(p.Character) end
+        end
+    end
 end)
 
 task.spawn(function()
@@ -661,4 +572,65 @@ task.spawn(function()
     end
 end)
 
-print("[uProxyz] Todos os módulos carregados com sucesso.")
+-- 10. SISTEMA DE MINIMIZAR / MAXIMIZAR
+local minimized = false
+local normalSize = MainFrame.Size
+
+Minimize.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        Container.Visible = false
+        Divider.Visible = false
+        MainFrame:TweenSize(UDim2.new(0, 500, 0, 50), "Out", "Quad", 0.3, true)
+        Minimize.Text = "+"
+    else
+        Container.Visible = true
+        Divider.Visible = true
+        MainFrame:TweenSize(normalSize, "Out", "Quad", 0.3, true)
+        Minimize.Text = "—"
+    end
+end)
+
+-- 11. SHUTDOWN (AUTO-DESTRUIÇÃO TOTAL)
+-- Limpa tudo para não deixar rastros no jogo
+local function shutdown()
+    running = false
+    print("[uProxyz] Iniciando Shutdown...")
+    
+    -- Desativa todos os módulos
+    Settings.FlyActive = false
+    Settings.HitboxActive = false
+    Settings.NoclipActive = false
+    Settings.AimbotActive = false
+    
+    stopFly()
+    
+    -- Limpa Hitboxes
+    for part, data in pairs(originalHitboxes) do
+        if part and part.Parent then
+            part.Size = data.Size
+            part.Transparency = data.Transparency
+            part.CanCollide = data.CanCollide
+        end
+    end
+    table.clear(originalHitboxes)
+
+    -- Limpa ESP
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character then removeESP(p.Character) end
+    end
+
+    -- Destrói a UI
+    ScreenGui:Destroy()
+    print("[uProxyz] Sistema Desligado e Limpo.")
+end
+
+ShutdownBtn.MouseButton1Click:Connect(shutdown)
+Close.MouseButton1Click:Connect(shutdown)
+
+-- 12. FINALIZAÇÃO DO SCRIPT
+print("------------------------------------------")
+print("[uProxyz] VERSÃO ULTRA CARREGADA!")
+print("[uProxyz] STATUS: ONLINE")
+print("[uProxyz] Módulos: Hitbox, Aimbot, Fly, TP, ESP...")
+print("------------------------------------------")
