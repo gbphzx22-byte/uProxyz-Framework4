@@ -710,7 +710,6 @@ task.spawn(function()
         if Settings.AntiBanActive then
             local char = Player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if hum then hum.WalkSpeed = 16 end
         end
     end
 end)
