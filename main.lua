@@ -480,7 +480,7 @@ end)
 
 -- 3. AIMBOT (CORRIGIDO: Lock-on suave via CFrame)
 task.spawn(function()
-    local smoothness = 0.12 
+    local smoothness = 1 
     while running do
         task.wait()
         if Settings.AimbotActive then
