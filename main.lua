@@ -8,7 +8,6 @@ local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
 
 local Settings = {
-     BrainrotActive = false,
     KillAuraActive = false,
     KillAuraRange = 15,
     HitboxActive = false,
@@ -19,9 +18,7 @@ local Settings = {
     FlyActive = false,
     FlySpeed = 100,
     NoclipActive = false,
-    RemoteSpamActive = false,
     AntiBanActive = false,
-    RemoteSpyActive = false,
     BasePosition = nil,
     ThemeColor = Color3.fromRGB(170, 85, 255)
 }
@@ -143,7 +140,6 @@ local function SetToggle(btn, label, enabled)
 end
 
 -- [INSTANCIAÇÃO DOS BOTÕES]
-local BrainrotBtn = CreateButton("Brainrot: OFF", 13)
 local KillAuraBtn = CreateButton("Kill Aura: OFF", 1)
 local HitboxBtn = CreateButton("Hitbox: OFF", 2)
 local ESPBtn = CreateButton("ESP: OFF", 3)
@@ -151,9 +147,7 @@ local AimbotBtn = CreateButton("Aimbot: OFF", 4)
 local InfiniteJumpBtn = CreateButton("Infinite Jump: OFF", 5)
 local FlyBtn = CreateButton("Fly: OFF", 6)
 local NoclipBtn = CreateButton("Noclip: OFF", 7)
-local RemoteSpamBtn = CreateButton("Remote Spam: OFF", 8)
 local AntiBanBtn = CreateButton("Anti-Ban: OFF", 9)
-local RemoteSpyBtn = CreateButton("Remote Spy: OFF", 10)
 local TPBaseBtn = CreateButton("TP BASE", 11)
 local ShutdownBtn = CreateButton("SELF DESTRUCT", 12)
 ShutdownBtn.BackgroundColor3 = Color3.fromRGB(150, 25, 25)
@@ -621,87 +615,6 @@ InfiniteJumpBtn.MouseButton1Click:Connect(function()
     Settings.InfiniteJumpActive = not Settings.InfiniteJumpActive
     SetToggle(InfiniteJumpBtn, "Infinite Jump", Settings.InfiniteJumpActive)
 end)
-
--- [LÓGICA CORRIGIDA DO BRAINROT DUPER]
-
--- Função para encontrar todos os Remotes do jogo
-local function getAllRemotes()
-    local remotes = {}
-    for _, v in ipairs(game:GetDescendants()) do
-        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-            table.insert(remotes, v)
-        end
-    end
-    return remotes
-end
-
--- Função de Spam (O Duper)
-local function startBrainrotDuper()
-    local remotes = getAllRemotes()
-    if #remotes == 0 then
-        print("[uProxyz] Nenhum Remote encontrado!")
-        return
-    end
-
-    print("[uProxyz] Iniciando Duper de Brainrot... 💀")
-
-    task.spawn(function()
-        while Settings.RemoteSpamActive do
-            -- Escolhe um remote aleatório
-            local targetRemote = remotes[math.random(1, #remotes)]
-            
-            if targetRemote:IsA("RemoteEvent") then
-                -- Dispara o evento com dados aleatórios para estressar o servidor
-                targetRemote:FireServer(
-                    "Brainrot", 
-                    math.random(1, 100), 
-                    "Skibidi", 
-                    true, 
-                    Instance.new("Part") 
-                )
-            elseif targetRemote:IsA("RemoteFunction") then
-                -- Tenta chamar a função com argumentos aleatórios
-                targetRemote:InvokeServer("Brainrot_Dupe", math.random(1, 1000))
-            end
-
-            -- Delay para não travar o SEU PC, mas manter o spam alto
-            task.wait(0.01) 
-            
-            -- Log de progresso no console
-            if math.random(1, 50) == 1 then
-                print("[uProxyz Duper] Spamming: " .. targetRemote.Name)
-            end
-        end
-    end)
-end
-
--- CONEXÃO DO BOTÃO (O que faz o botão ficar "ON" e iniciar o loop)
-BrainrotBtn.MouseButton1Click:Connect(function()
-    Settings.BrainrotActive = not Settings.BrainrotActive
-    SetToggle(BrainrotBtn, "Brainrot", Settings.BrainrotActive)
-    
-    if Settings.BrainrotActive then
-        -- Inicia o processo de estresse
-        startBrainrotDuper()
-    else
-        print("[uProxyz] Brainrot parado.")
-    end
-end)
-
--- Conectando ao seu botão de Remote Spam
-RemoteSpamBtn.MouseButton1Click:Connect(function()
-    Settings.RemoteSpamActive = not Settings.RemoteSpamActive
-    SetToggle(RemoteSpamBtn, "Remote Spam", Settings.RemoteSpamActive)
-    
-    if Settings.RemoteSpamActive then
-        -- Inicia o processo de estresse
-        startBrainrotDuper()
-    else
-        print("[uProxyz] Duper de Brainrot parado.")
-    end
-end)
-
---------------------------------------------------------------------
 
 -- 8. ANTI-BAN & TP BASE
 task.spawn(function()
