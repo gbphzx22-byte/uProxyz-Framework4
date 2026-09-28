@@ -591,9 +591,24 @@ end)
 task.spawn(function()
     while running do
         task.wait()
-        if Settings.NoclipActive and Player.Character then
-            for _, part in ipairs(Player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = false end
+
+        local character = Player.Character
+        if character then
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    if Settings.NoclipActive then
+                        part.CanCollide = false
+                    else
+                        -- Restaura a colisão das partes principais
+                        if part.Name == "HumanoidRootPart"
+                            or part.Name == "UpperTorso"
+                            or part.Name == "LowerTorso"
+                            or part.Name == "Torso"
+                            or part.Name == "Head" then
+                            part.CanCollide = true
+                        end
+                    end
+                end
             end
         end
     end
